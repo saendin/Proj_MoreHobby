@@ -1,0 +1,64 @@
+.profile {
+  position: relative;
+  display: flex;
+  margin-left: 30px;
+  width: 90%;
+}
+
+.cmt{
+  border:none;
+  outline:none;
+}
+
+.reCmt{
+  display: none;
+  width: 230px;
+  border-radius: 25px;
+  padding: 2px 8px;
+  margin-left: 3px;
+}
+
+input:focus{
+  outline: 1px solid #2254b191;
+}
+
+.profile::after {
+  content: "";
+  position: absolute;
+  left: 30px;
+  height: 1px;
+  width: 100%;
+}
+
+.cmt_box {
+  border-bottom: 1px solid rgba(184, 189, 190, 0.8);
+}
+
+.user {
+  margin-top: 20px;
+}
+
+.date {
+  position: absolute;
+  right: 0;
+}
+
+.btn {
+  position: absolute;
+  right: 0;
+}
+
+v-avatar {
+  cursor: pointer;
+}
+
+.member_id {
+  color: #2255b1;
+  background-color: aliceblue;
+  font-weight: 300;
+  cursor: pointer;
+}
+
+.user {
+  cursor: pointer;
+}

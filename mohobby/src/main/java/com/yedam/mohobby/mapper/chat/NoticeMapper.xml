@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.mohobby.mapper.chat.NoticeMapper">
+	<!-- 알림 전체조회 -->
+	<select id="getAllNotice" parameterType="String"
+		resultType="com.yedam.mohobby.service.notice.NoticeVO">
+	select	MEMBER_ID,
+			AVATAR,
+			TITLE,
+			SUBTITLE,
+			NOTICE_ID,
+			NOTICE_TYPE,
+			BOARD_TYPE,
+			MOIM_ID,
+			POST_ID,
+			CONTENT_TYPE
+	from
+	notice
+	where member_id =#{memberId}
+	order by NOTICE_ID
+	</select>
+	<!-- 알림 등록 -->
+	<insert id="insertNotice"
+		parameterType="com.yedam.mohobby.service.notice.NoticeVO">
+		insert into notice(MEMBER_ID,
+							AVATAR,
+							TITLE,
+							SUBTITLE,
+							NOTICE_ID,
+							NOTICE_TYPE,
+							BOARD_TYPE,
+							MOIM_ID,
+							POST_ID,
+							CONTENT_TYPE)
+		values(				#{memberId},
+							#{Avatar},
+							#{Title},
+							#{Subtitle},
+							notice_seq.nextval,
+							#{noticeType},
+							#{boardType},
+							#{moimId},
+							#{postId},
+							#{contentType}
+		)
+	</insert>
+	<!-- 알림 삭제 -->
+	<delete id="delectNotice" parameterType="integer">
+		delete from notice 
+		where notice_id=#{noticeId}
+	</delete>
+	<!-- 일반 알림 전체 삭제 -->
+	<delete id="delectAllNotice" parameterType="String">
+		delete from notice 
+		where 1=1 
+		and member_id=#{memberId}
+		and (notice_type=0
+		or notice_type=1)
+	</delete>
+		<!-- 메신저 알림 삭제 -->
+	<delete id="delectMsgNotice" parameterType="integer">
+		delete from notice 
+		where post_id=#{postId}
+	</delete>
+		<!-- 메신저 알림 전체 삭제 -->
+	<delete id="delectAllMsgNotice" parameterType="String">
+		delete from notice 
+		where 1=1 
+		and member_id=#{memberId}
+		and notice_type=2
+	
+	</delete>
+
+	<!-- 알림번호 조회 -->
+	<select id="getNoticeId" resultType="integer">
+		select nvl(Max(notice_id),0)+1
+		from notice
+	</select>
+		<!-- 전체 안읽은 메시지수  -->
+	<select id="getNonReadAllChat" resultType="Integer"	parameterType="String">
+		select count(*) as non_read_count
+		from chat a
+		join room b
+		on (a.room_no=b.room_no)
+		where b.member_id =#{memberId}
+		and	a.msg_time>b.check_time
+	</select>
+
+</mapper>

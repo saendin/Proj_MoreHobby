@@ -1,0 +1,238 @@
+/*
+  Copyright (c) 2020 - present, DITDOT Ltd.
+  https://www.ditdot.hr/en
+*/
+
+html {
+    font-size: 1px;
+    font-size: clamp(11px, 3vw, 14px);
+    /* define flexible rem size */
+    font-family: Roboto, Arial, sans-serif;
+    line-height: 1.4;
+    }
+    
+    body {
+    background-color: #EEF3F6;
+    color: #222;
+    margin: 0;
+    }
+    
+    /* MAIN GRID */
+    
+    .cards-container {
+    width: 80%;
+    margin: 2rem auto;
+    /* width: 95%; */
+    display: grid;
+    /* set display to grid to create the outer grid */
+    grid-template-columns: repeat(3, [col-start] fit-content(9rem));
+    /* create 4 explicit column tracks */
+    grid-auto-rows: fit-content(12rem) minmax(10rem, 14rem) auto auto;
+    /* create 4 implicit row tracks */
+    gap: 0.5rem;
+    /* create the gap between grid columns and rows */
+    justify-content: center;
+    }
+    
+    /* SUBGRID */
+    
+    .card {
+    grid-column: span 3;
+    /* every card spans across 3 columns of the main grid */
+    grid-row: span 4;
+    /* every card spans across 4 rows of the main grid */
+    display: grid;
+    /* set display to grid in order to create a subgrid */
+    grid-template-columns: subgrid [card-start][button-start][col][card-end button-end];
+    /* create subgrid for columns to use grid column tracks of the parent and name the column lines*/
+    grid-template-rows:subgrid [title-start][title-end photo-start] [photo-end text-start] [text-end button-start] [button-end];
+    /* create subgrid for rows to use row column tracks of the parent and name the row lines*/
+    row-gap: 0;
+    /* override the inherited row gap */
+    background-color: #fbfbfb;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.24);
+    margin: 0 0.5rem 1rem 0.5rem;
+    padding: 1rem;
+    /*padding influences the sizing of rows and columns*/
+    }
+    
+    /* SUBGRID IN SUBGRID */
+    
+    .card-header-wrapper {
+    grid-column: card;
+    /* use named tracks to place elements inside the subgrid */
+    grid-row: title;
+    display: grid;
+    /* make it grid container to create another subgrid inside */
+    grid-template-columns: subgrid;
+    /* create subgrid for columns to use grid column tracks of the parent */
+    grid-template-rows: fit-content(6rem) fit-content(6rem);
+    /* create two independent rows */
+    grid-template-areas: "subtitle subtitle avatar" "title title title";
+    /* create named grid areas to place the header elements*/
+    align-items: end;
+    font-family: "Open Sans", Arial, sans-serif;
+    }
+    
+    /* CARD DETAILS */
+    
+    .card-title {
+      grid-area: title;
+    /* place card title in the named grid area*/
+    font-size: 1.25rem;
+    }
+    
+    .card-subtitle {
+    grid-area: subtitle;
+    font-weight: normal;
+    margin: 0;
+    margin-bottom: 20px;
+    cursor:pointer;
+    font-weight: 600;
+    /* margin-top:100px; */
+    }
+    
+    .card-avatar-wrapper {
+    /* width: 60px; */
+    grid-area: avatar;
+    align-self: end;
+    justify-self: end;
+    
+    }
+    
+    .card-avatar {
+    object-fit: cover;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    float:right;
+    margin-top: 20px
+    }
+    
+    .card-photo-wrapper {
+    grid-column: card;
+    grid-row: photo;
+    margin-bottom: 0.5rem;
+    }
+    
+    .card-photo {
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+    }
+    
+    .card-text {
+    font-size: 0.8rem;
+    grid-column: col-start / span 3;
+    /* use main grid line names*/
+    grid-row: text;
+    margin-bottom: 2rem;
+    /* width: 200px; */
+    height:70px;
+    /* 특정 단위로 텍스트를 자르기 위한 구문 */
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* 텍스트를 자를 때 원하는 단위 ex) 3줄 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    }
+    
+    .card-like {
+    font-size: 0.8rem;
+    grid-column: 1/2;
+    grid-row: button;
+    width: 2rem;
+    height: 2rem;
+    align-self: end;
+    /* cursor: pointer; */
+    }
+    
+    .card-button {
+    grid-area: button;
+    min-width: 4rem;
+    height: 1.5rem;
+    background-color: #F36A3E;
+    border: none;
+    border-radius: 2rem;
+    padding: 0 0.1rem;
+    color: white;
+    font-size: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09rem;
+    cursor: pointer;
+    justify-self: end;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 8rem;
+    margin-bottom:10px;
+    }
+    
+    p.caption {
+    text-align: center;
+    font-size: 13px;
+    padding-bottom: 30px;
+    }
+    
+    p.caption a {
+    color: #F36A3E;
+    }
+    
+    /* browsers without support for the subgrid feature */
+    
+    @supports not (grid-template-columns: subgrid) {
+    .card {
+      grid-template-columns: repeat(3, [col-start] fit-content(9rem));
+      grid-template-rows: 9rem 15rem auto auto;
+    }
+    
+    .card-header-wrapper, .card-photo-wrapper, .card-text {
+      grid-column: 1/-1;
+      grid-row: span 1;
+    }
+
+    .card-photo{
+      position:relative;
+    }
+
+    .image_icon {
+      position: absolute;
+      z-index: 1;
+      color: white;
+    }
+    
+    .card-text {
+      margin-bottom: 20px;
+    }
+    
+    .card-button {
+      grid-column: 3/-1;
+      align-self: end;
+    }
+    
+    }
+    
+    @media screen and (min-width: 480px) {
+    html {
+      font-size: clamp(11px, 2vw, 14px);
+    }
+    
+    .cards-container {
+      grid-template-columns: repeat(6, [col-start] fit-content(9rem));
+    }
+    
+    }
+    
+    @media screen and (min-width: 1024px) {
+    html {
+      font-size: clamp(11px, 1vw, 14px);
+    }
+    
+    .cards-container {
+      grid-template-columns: repeat(12, [col-start] fit-content(9rem));
+    }
+    
+    }
+    
+    /*
+    This example is not supported in Internet Explorer
+    */

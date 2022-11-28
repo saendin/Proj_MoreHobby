@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.mohobby.mapper.user.MypageClassMapper">
+
+<!-- 유저가 공개중안 강의 목록(강사만)-->
+<select id="getProfileClasses" parameterType="String" resultType="com.yedam.mohobby.service.user.MypageClassVO">
+select c.class_name, k.keyword_name, c.class_type, c.region_id, c.start_date, c.end_date
+from class c join keyword k
+on c.keyword_id = k.keyword_id
+where c.member_id = #{memberId} and c.profile_yn = 0
+</select>
+
+<!-- 유저가 공개중인 강의 목록 수정 -->
+<update id="updateProfileClasses" parameterType="com.yedam.mohobby.service.classes.ClassesVO">
+update class set profile_yn = #{profileYn} where member_id = #{memberId} and class_id = #{classId}
+</update>
+
+<!-- 유저가 운영중인 강의 목록(카테고리별 조회) -->
+<select id="getManageClasses" parameterType="hashMap" resultType="com.yedam.mohobby.service.user.MypageClassVO">
+select c.class_name, k.keyword_name, c.class_type, c.region_id, c.start_date, c.end_date
+from class c join keyword k
+on c.keyword_id = k.keyword_id
+where c.member_id = #{memberId} and c.keyword_id = #{keywordId}
+</select>
+
+<!-- 유저가 참여중인 강의 목록 (카테고리별 조회)  -->
+<select id="getTakeClasses" parameterType="hashMap" resultType="com.yedam.mohobby.service.user.MypageClassVO" >
+select b.class_name, c.keyword_name, b.class_type, b.region_id, b.start_date, b.end_date
+from class_pay a join class b
+on a.class_id = b.class_id
+join keyword c
+on b.keyword_id = c.keyword_id
+where a.member_id = #{memberId} and b.keyword_id = #{keywordId}
+</select>
+
+</mapper>

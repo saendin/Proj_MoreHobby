@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.mohobby.mapper.admin.AdminClassMapper">
+
+
+<!-- 강의 목록 -->
+<select id="getAuditClassList" resultType="com.yedam.mohobby.service.admin.AdminClassVO">
+select a.class_id, a.member_id, b.keyword_name as region_name, c.keyword_name as category_name, a.class_name, a.class_price, a.class_type, a.start_date, a.end_date, a.audit_status, a.audit_return
+from keyword b full outer join class a
+on a.region_id = b.keyword_id
+join keyword c
+on a.keyword_id = c.keyword_id
+</select>
+
+<!-- qna리스트 전체 가지고 오기  -->
+<select id="getAllQnAList" resultType="com.yedam.mohobby.service.classes.ClassBoardVO">
+select a.board_id, a.member_id, a.class_id, a.board_type, a.title, a.content, a.rate, a.reply_check, a.write_date, a.secret, b.class_name
+from class_board a join class b
+on a.class_id = b.class_id
+where a.board_type = 1
+</select>
+
+<!-- 선택한 클래스의 qna리스트 가지고 오기 -->
+<select id="getQnAList" parameterType="integer" resultType="com.yedam.mohobby.service.classes.ClassBoardVO">
+select a.board_id, a.member_id, a.class_id, a.board_type, a.title, a.content, a.rate, a.reply_check, a.write_date, a.secret, b.class_name, b.class_type
+from class_board a join class b
+on a.class_id = b.class_id
+where a.board_type = 1 and a.class_id=#{classId}
+</select>
+
+<!-- qna답변 여부 업데이트 -->
+<update id="updateQnAAnswer" parameterType="com.yedam.mohobby.service.classes.ClassBoardVO">
+update class_board set content = #{content}, reply_check = 1
+where board_id = #{boardId}
+</update>
+<!-- 승인 신청한 강의 정보(vue에서 상세 설명 경로 가지고오기) -->
+
+
+<!-- 신청 결과 업로드 -->
+<update id="updateAuditStatus" parameterType="com.yedam.mohobby.service.classes.ClassesVO">
+update class set audit_status = #{auditStatus}, audit_return = #{auditReturn} where class_id = #{classId}
+</update>
+
+<!-- 강사, 강의, 정산 정보, 지급 여부 등등 -->
+<update id="update"></update>
+
+<!-- 강의 개설 신청 시 등록한 준비물 목록 조회  -->
+<select id="getApplyNeeds" parameterType="integer" resultType="com.yedam.mohobby.service.classes.ClassesVO">
+select needs from class where class_id= #{classId}
+</select>
+
+<!-- 강의 수료증 발급 여부, 발급 기준 업데이트  -->
+<update id="updateCert" parameterType="com.yedam.mohobby.service.classes.ClassesVO">
+update class set cert_able = #{certAble}, cert_standard = #{certStandard} where class_id = #{classId}
+</update>
+
+
+<!-- 강의 준비물 insert -->
+<insert id="insertNeeds" parameterType="com.yedam.mohobby.service.classes.ClassNeedsVO">
+<selectKey keyProperty="prodId" resultType="integer">
+select nvl(max(prod_id), 0) + 1 from class_needs
+</selectKey>
+insert into class_needs (prod_id, class_id, prod_price, prod_name, prod_img) values (#{prodId}, #{classId}, #{prodPrice}, #{prodName}, #{prodImg})
+</insert>
+</mapper>

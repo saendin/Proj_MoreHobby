@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.mohobby.mapper.user.MypageSnsMapper">
+
+	<!-- 유저의 팔로워 목록 -->
+	<select id="getFollower" parameterType="String" resultType="com.yedam.mohobby.service.sns.SnsFollowVO">
+<!-- 		select b.following_id, b.follower_id, a.profile_img, a.nickname
+		from member a join follow b
+		on a.member_id = b.follower_id
+		where b.follower_id = #{memberId} -->
+				   select b.follower_id,b.following_id,profile_img,nickname from
+        (select *
+        from member)a join
+        (select following_id,follower_id
+        from follow
+        where follower_id=#{memberId})b on (a.member_id=b.following_id)
+		
+	</select>
+	
+	<!-- 유저의 팔로잉 목록 -->
+	<select id="getFollowing" parameterType="String" resultType="com.yedam.mohobby.service.sns.SnsFollowVO">
+	<!-- 	select b.following_id, b.follower_id, a.profile_img, a.nickname
+		from member a join follow b
+		on a.member_id = b.follower_id
+		where b.following_id = #{memberId} -->
+		select  b.follower_id, b.following_id,profile_img,nickname from
+        (select *
+        from member)a join
+        (select follower_id,following_id
+        from follow
+        where following_id=#{memberId})b on (a.member_id=b.follower_id)
+	</select>
+	
+	<!-- sns 유저가 작성한 게시글 목록 -->
+	<select id="getPost" parameterType="String" resultType="com.yedam.mohobby.service.sns.SnsPostVO">
+		select post_id, thumbnail
+		from sns_post
+		where member_id = #{memberId}
+		order by write_date
+	</select>
+	
+	<!-- sns 유저가 찜한 게시글 목록 -->
+	<select id="getJjim" parameterType="String" resultType="com.yedam.mohobby.service.sns.SnsPostVO">
+	select b.post_id, b.thumbnail
+	from jjim a join sns_post b
+	on a.target_id = b.post_id
+	where a.target_type = 2 and b.member_id = #{memberId}
+	</select>
+</mapper>

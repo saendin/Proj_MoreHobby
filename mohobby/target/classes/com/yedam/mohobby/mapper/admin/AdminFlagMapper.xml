@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.mohobby.mapper.admin.AdminFlagMapper">
+
+
+<!-- 신고 정보 업데이트 -->
+<update id="updateFlag" parameterType="com.yedam.mohobby.service.admin.FlaggingVO">
+update flagging set admin_confirm = #{adminConfirm}, flag_result = #{flagResult}
+where flag_id = #{flagId}
+</update>
+
+<!-- 신고하기 -->
+<insert id="insertFlagging" parameterType="com.yedam.mohobby.service.admin.FlaggingVO">
+insert into flagging (flag_id, flag_from, flag_to, flag_code, flag_reason, admin_confirm, flag_result, moim_name)
+values (flag_id_seq.nextval, #{flagFrom}, #{flagTo}, #{flagCode}, #{flagReason}, 0, 0, #{moimName})
+</insert>
+
+<!-- 신고된 소모임 목록 -->
+<select id="flagMoimList" resultType="com.yedam.mohobby.service.admin.FlaggingVO">
+select flag_id, moim_name, flag_from, flag_to, flag_code, 
+		flag_reason, admin_confirm, flag_result
+from flagging
+where flag_code like 'mo%'
+</select>
+
+<!--  신고된 유저 목록 -->
+<select id="flagUserList" resultType="com.yedam.mohobby.service.admin.FlaggingVO">
+select flag_id, flag_from, flag_to, flag_code, flag_reason, admin_confirm, flag_result
+from flagging
+where flag_code like 'us%'
+</select>
+
+
+<!-- 신고 제거 -->
+<delete id="deleteFlag" parameterType="integer">
+delete from flagging where flag_id = #{flagId}
+</delete>
+
+<!-- 신고된 소모임 권한 업데이트  -->
+<update id="updateMoimOpen" parameterType="com.yedam.mohobby.service.moim.MoimVO">
+update moim set moim_open = #{moimOpen} where moim_id = #{moimId}
+</update>
+
+<!-- 신고 코드에 따라서 검색  -->
+<select id="getFlagByCode" parameterType="String" resultType="com.yedam.mohobby.service.admin.FlaggingVO">
+select flag_id, flag_from, flag_to, flag_code, flag_reason, admin_confirm, flag_result
+from flagging
+where flag_code = #{flag_code}
+</select>
+
+</mapper>

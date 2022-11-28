@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.mohobby.mapper.admin.AdminSnsMapper">
+
+<!-- top 10 해시태그 -->
+<select id="top10Hashtag" resultType="com.yedam.mohobby.service.communal.HashtagVO">
+select hashtag, use_count
+from (select hashtag, use_count from hashtag order by use_count)
+<![CDATA[where rownum <= 10]]>
+</select>
+
+</mapper>

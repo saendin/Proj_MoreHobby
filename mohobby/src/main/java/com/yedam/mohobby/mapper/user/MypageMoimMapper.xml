@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.mohobby.mapper.user.MypageMoimMapper">
+
+
+<!-- 유저가 공개중인 소모임 목록 -->
+<select id="getProfileMoim" parameterType="String" resultType="com.yedam.mohobby.service.moim.MoimVO">
+select a.moim_name, a.moim_img, a.moim_catg, a.moim_region, a.reg_cnt
+from moim a join moim_member b
+on a.moim_id = b.moim_id
+where b.member_id = #{memberId} and b.profile_yn = 0
+</select>
+
+<!-- 유저가 공개중인 소모임 목록 수정 -->
+<update id="updateProfileMoim" parameterType="com.yedam.mohobby.service.moim.MoimMemberVO">
+update moim_member set profile_yn = #{profileYn} 
+where member_id = #{memberId} and moim_id = #{moimId}
+</update>
+
+
+<!-- 유저가 참여, 운영중 소모임 목록(카테고리별 조회) / 참여중 memberRole 0/ 운영중 memberRole 1-->
+<select id="getMoim" parameterType="hashMap" resultType="com.yedam.mohobby.service.user.MypageMoimVO">
+select a.member_id, a.moim_id, b.reg_cnt, b.moim_img, b.moim_name, b.moim_info, b.moim_catg, b.moim_region
+from moim_member a join moim b
+on a.moim_id = b.moim_id
+where a.member_id = #{memberId} and a.member_role = #{memberRole} 
+and b.moim_catg in (select sub_keyword_name
+                    from sub_keyword
+                    where keyword_id = (select keyword_id from keyword where keyword_name = #{keywordName}))
+</select>
+</mapper>

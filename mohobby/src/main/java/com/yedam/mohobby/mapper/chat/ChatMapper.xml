@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.mohobby.mapper.chat.ChatMapper">
+	<!-- 채팅방 안읽은 메시지수 -->
+	<select id="getNonReadChat"
+		resultType="com.yedam.mohobby.service.chat.NonReadChatVO"
+		parameterType="com.yedam.mohobby.service.chat.ChatVO">
+		select a.room_no,
+				count(*) as non_read_count
+		from chat a
+		join room b
+		on (a.room_no=b.room_no)
+		where b.member_id =#{memberId}
+		and	a.msg_time>b.check_time
+		and a.member_id not like #{memberId}
+		group by a.room_no
+	</select>
+
+	<!-- 1:1 채팅방 추출 -->
+	<select id="getChatRoom"
+		resultType="com.yedam.mohobby.service.chat.RoomVO"
+		parameterType="String">
+		with getUserInfo as(
+							SELECT
+									a.nickname,
+									a.profile_img,
+									b.room_no
+							FROM
+									member a
+							JOIN room b 
+							ON (a.member_id = b.member_id )
+							WHERE	b.member_id IN (
+													SELECT
+															member_id
+													FROM
+															room
+													WHERE
+															room_no IN (
+																		SELECT
+																				room_no
+																		FROM
+																				room
+																		WHERE
+																				member_id = #{memberId}
+																		)
+													AND member_id NOT IN #{memberId}
+													)
+						),
+				getroomNo as(
+							SELECT
+									content,
+									room_no,
+									msg_time
+							FROM
+									chat
+							WHERE
+									chat_id
+							IN (
+								SELECT
+										MAX(chat_id)
+								FROM
+										chat
+								WHERE
+										room_no 
+								IN (
+									SELECT
+											room_no
+									FROM
+											room
+									WHERE
+											member_id = #{memberId}
+									and moim_id=0
+									)
+								GROUP BY
+										room_no
+								)
+							)
+		SELECT
+				c.nickname,
+				c.room_no,
+				c.profile_img,
+				d.content,
+				d.msg_time,nvl(null,0)check_in ,nvl(null,0)non_read_chat
+		FROM
+			getUserInfo c
+		JOIN getroomNo d
+		ON (c.room_no = d.room_no)
+	</select>
+	<!-- 소모임 채팅목록 추출-->
+	<select id="getChatMoimRoom"
+		resultType="com.yedam.mohobby.service.chat.RoomVO"
+		parameterType="String">
+	with getMoimInfo as(
+						select 
+							   moim_id,
+							   moim_img,
+							   moim_name
+						from moim
+						where
+						moim_id in(
+									SELECT
+											room_no
+											FROM
+											room
+									WHERE
+											member_id =	#{memberId}
+									 and	moim_id=1
+									)
+					),
+		getRoomNo as(
+						 SELECT
+						 		content,
+								room_no,
+								msg_time
+						 FROM
+								chat
+						 WHERE chat_id IN (
+											SELECT
+													MAX(chat_id)
+											FROM
+													chat
+											WHERE
+													room_no IN ( SELECT
+						                                                room_no
+						                                                FROM
+						                                                room
+						                                         WHERE
+						                                                member_id =	#{memberId}	)
+																GROUP BY room_no
+																)
+		                )
+		select a.content as content,
+				 a.msg_time,
+				 b.moim_name as	nickname,room_no , 
+				b.moim_img as profile_img,
+				nvl(null,0)check_in,
+				nvl(null,0)non_read_chat 
+		from getRoomNo a 
+		join getMoimInfo b 
+	     on (a.room_no=b.moim_id)
+	</select>
+	<!-- 채팅내역 추출 -->
+	<select id="getChat"
+		resultType="com.yedam.mohobby.service.chat.ChatVO"
+		parameterType="String">
+		select
+				a.content,
+				a.member_id,
+				a.room_No,
+				to_char(a.msg_time,'mi') as	minute,
+				to_char(a.msg_time,'HH24') as hour,
+				b.NICKNAME,
+				b.PROFILE_IMG
+		from chat a 
+		join
+			  member b 
+		 on  (a.member_id=b.member_id)
+		where
+				room_no=#{roomNo}
+		order by chat_id
+	</select>
+	<!-- 채팅상대 추출 -->
+	<select id="getTargetId" resultType="String"
+		parameterType="com.yedam.mohobby.service.chat.ChatUserVO">
+		select member_id
+		from room
+		where room_no =#{roomNo}
+
+	</select>
+	<!--대화내역 저장 -->
+	<insert id="insertMessage"
+		parameterType="com.yedam.mohobby.service.chat.ChatVO2">
+		insert into chat(
+		CHAT_ID,
+		ROOM_NO,
+		CONTENT,
+		MEMBER_ID)
+		values(
+		CHAT_ID_SEQ.nextval,
+		#{roomNo},
+		#{content},
+		#{memberId}
+		)
+	</insert>
+	<!-- sns채팅방 생성및 조회 -->
+	<select id="getSnsChatRoomNo"
+		parameterType="com.yedam.mohobby.service.chat.CreateRoomVO" statementType="CALLABLE">
+		{
+			call pr_get_room_id
+			(
+				#{myId,mode=IN},#{targetId,mode=IN},#{vRoomNo,mode=OUT,jdbcType=INTEGER}
+			)
+		}
+	</select>
+	<!-- moim채팅방 조회 -->
+	<select id="getMoimChatRoomNo" 
+		parameterType="com.yedam.mohobby.service.chat.CreateRoomVO" statementType="CALLABLE">
+		{
+		call pr_get_moimroom_id(
+		#{vMemberId,mode=IN},#{vMoimId,mode=IN},#{vRoomNo,mode=OUT,jdbcType=INTEGER}
+		)
+		}
+	</select>
+	 <update id="updateCalc" parameterType="String">
+      UPDATE moim_dutch_ptp
+      SET calc_check =#{calcCheck}
+      WHERE member_id = #{memberId}
+      and dutch_id = #{dutchId};
+   </update>
+	<update id="updateCheckTime"
+		parameterType="com.yedam.mohobby.service.chat.ChatUserVO">
+		update room set check_time = sysdate
+		where member_id =#{memberId}
+		and room_no=#{roomNo}
+	</update>
+	<!-- 채팅방 체크인 -->
+	<update id="updateCheckIn"
+		parameterType="com.yedam.mohobby.service.chat.ChatUserVO">
+		update room 
+		set check_in =1 
+		where room_no=#{roomId} 
+		and member_id=#{memberId}
+	</update>
+		<!-- 채팅방 체크아웃 -->
+	<update id="updateCheckOut"
+		parameterType="com.yedam.mohobby.service.chat.ChatUserVO">
+		update room 
+		set check_in =0 
+		where room_no=#{roomId} 
+		and member_id=#{memberId}
+	</update>
+	
+	<!-- 채팅방 전환시 체크인 아웃 -->
+		<update id="updateCheckInOut"
+		parameterType="com.yedam.mohobby.service.chat.ChatUserVO">
+		{
+		call checkInOut(
+						 #{preRoomId,mode=IN}
+						,#{currentRoomId,mode=IN}
+						,#{memberId,mode=IN}
+						)
+		}
+	</update>
+	<!-- 체크인 여부 조회 -->
+	<select id="getCheckIn" parameterType="com.yedam.mohobby.service.chat.ChatUserVO" resultType="Integer">
+	select check_in 
+	from room 
+	where room_no=#{roomId}
+	and member_id=#{memberId}
+	</select>
+	
+	<!-- 1:1 1:m 채팅 여부 조회 -->
+	<select id="checkMoimId" parameterType="Integer" resultType="Integer">
+ select moim_id
+	from room
+	where room_no=#{roomNo}
+    group by moim_id
+
+	</select>
+	
+</mapper>

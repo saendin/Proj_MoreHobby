@@ -1,0 +1,671 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.mohobby.mapper.classes.ClassMapper">
+
+	<resultMap id="currList" type="com.yedam.mohobby.service.classes.ClassChapterVO">
+		<id property="chapId" column="chap_id"/>
+		<result property="classId" column="class_id"/>
+		<result property="chapName" column="chap_name"/>
+		<result property="memberId" column="member_id"/>
+		<collection column="{chapId=chap_id, memberId=member_id}" property="currList" javaType="java.util.ArrayList"
+					ofType="com.yedam.mohobby.service.classes.ClassCurriculumVO"
+					select="selectCurrInfoList"/>
+	</resultMap>
+	
+	<!-- 커리큘럼 조회 -->
+	<select id="selectCurrInfoList" parameterType="com.yedam.mohobby.service.classes.ClassChapterVO" 
+	          resultType="com.yedam.mohobby.service.classes.ClassCurriculumVO">
+		<!-- select * from class_curriculum
+		where chap_id = #{chapId}
+		order by chap_id, curr_id -->
+		select distinct c.*, nvl(p.view_progress, 0) view_progress
+		from class_curriculum c,
+		    (select * 
+		    from class_attendance
+		    where member_id = #{memberId})p
+		where chap_id = #{chapId}
+		and c.curr_id = p.curr_id(+)
+		order by c.curr_id
+	</select>
+	
+	<!-- 챕터와 커리큘럼 조회 -->
+	<select id="getChapterList" parameterType="com.yedam.mohobby.service.classes.ClassChapterVO" resultMap="currList">
+		select a.*, #{memberId} member_id
+		from class_chapter a
+		where class_id = #{classId}
+	</select>
+	
+	<!-- 커리큘럼 단건 조회 -->
+	<select id="getCurrInfo" parameterType="java.util.HashMap" resultType="com.yedam.mohobby.service.classes.ClassCurriculumVO">
+		select c.*, nvl(a.view_progress, 0) view_progress
+		from class_curriculum c,
+		    (select * from class_attendance where member_id = #{memberId}) a
+		where c.curr_id = a.curr_id(+)
+		and c.curr_id = #{currId}
+	</select>
+
+	<!-- 강의 개설 -->
+	<insert id="insertClass" parameterType="com.yedam.mohobby.service.classes.ClassesVO">
+		<selectKey keyProperty="classId" resultType="java.lang.Integer" order="BEFORE">
+		select NVL(MAX(class_id), 0) + 1 from class	
+		</selectKey>
+		insert into class (
+								class_id,
+								keyword_id,
+								region_id,
+								member_id,
+								class_name,
+								class_price,
+								class_info,
+								img_amount,
+								class_type,
+								cert_able,
+								cert_standard,
+								bank_code,
+								account,
+								postcode,
+								address,
+								address_detail,
+								start_date,
+								end_date,
+								account_holder,
+								job_name,
+								week_times,
+								start_time,
+								end_time,
+								weeks,
+								needs
+							) 
+		values (
+					#{classId},
+					#{keywordId, jdbcType=VARCHAR},
+					#{regionId, jdbcType=VARCHAR},
+					#{memberId},
+					#{className},
+					#{classPrice},
+					#{classId}||'.html',
+					#{imgAmount, jdbcType=INTEGER},
+					#{classType},
+					#{certAble, jdbcType=INTEGER},
+					#{certStandard, jdbcType=INTEGER},
+					#{bankCode},
+					#{account},
+					#{postcode, jdbcType=VARCHAR},
+					#{address, jdbcType=VARCHAR},
+					#{addressDetail, jdbcType=VARCHAR},
+					#{startDate, jdbcType=DATE},
+					#{endDate, jdbcType=DATE},
+					#{account_holder},
+					#{jobName},
+					#{weekTimes, jdbcType=INTEGER},
+					#{startTime, jdbcType=INTEGER},
+					#{endTime, jdbcType=INTEGER},
+					#{weeks, jdbcType=INTEGER},
+					#{needs, jdbcType=VARCHAR}
+				)
+	</insert>
+	
+	<!-- 챕터 생성 -->
+	<insert id="insertChaper">
+		<selectKey keyProperty="chapId" resultType="java.lang.Integer" order="BEFORE">
+			select nvl(max(chap_id),0)+1 from class_chapter
+		</selectKey>
+			insert into class_chapter(
+										chap_id,
+										class_id,
+										chap_name
+										)
+			values (
+					#{chapId},
+					#{classId},
+					#{chapName}
+					)
+	</insert>
+	
+	<!-- 커리큘럼 생성 -->
+	<insert id="insertCurriculum">
+		<selectKey keyProperty="currId" resultType="java.lang.Integer" order="BEFORE">
+			select nvl(max(curr_id), 0) + 1 from class_curriculum
+		</selectKey>
+		
+			insert into 
+			class_curriculum (
+								curr_id,
+								chap_id,
+								part_no,
+								part_name,
+								video_url,
+								video_length,
+								class_id,
+								class_date,
+								file_extension
+								)
+			values (
+					#{currId},
+					#{chapId},
+					#{partNo},
+					#{partName},
+					#{currId}||'.mp4',
+					#{videoLength},
+					#{classId},
+					#{classDate, jdbcType=DATE},
+					'mp4'
+					)
+	</insert>
+	
+	<!-- 목록조회 -->
+	<select id="listAll" parameterType="com.yedam.mohobby.service.classes.ClassListRequestVO" resultType="com.yedam.mohobby.service.classes.ClassesVO">
+		select * from (
+		select distinct k.*, b.nickname, w.keyword_name
+		from
+		    (select  NVL(u.review, 0) reviewTotal, decode(m.target_id, null, 0, 1) jjim, NVL(x.jjim, 0)jjimTotal, c.* 
+		    from class c,
+		        (
+		        select * 
+		        from jjim 
+		        where target_type = 1 
+		        and member_id = #{memberId}
+		        ) m,
+		        (
+		        select count(*)jjim, target_id 
+		        from jjim 
+		        where target_type = 1 
+		        group by target_id
+		        ) x,
+		        (select count(*)review, class_id from class_board where board_type = 4 group by class_id) u
+		    where c.class_id = m.target_id(+)
+		    and c.class_id = x.target_id(+)
+		    and c.class_id = u.class_id(+)) k, 
+		member b, keyword w
+		where k.member_id = b.member_id
+		and k.keyword_id = w.keyword_id)
+		where audit_status = 2
+		<if test='catg != "all"'>
+		and keyword_id = #{catg}
+		</if>
+		order by class_id desc
+	</select>
+	
+	<!-- 모집중인 강의 조회 -->
+	<select id="listOnClass" resultType="com.yedam.mohobby.service.classes.ClassesVO">
+		select * 
+		from class
+		where audit_status = 2
+		and (end_date > current_date or class_type=0)
+	</select>
+	
+	<!-- 단건조회 -->
+	<select id="listOne" parameterType="com.yedam.mohobby.service.classes.ClassListRequestVO" resultType="com.yedam.mohobby.service.classes.ClassesVO">
+		select
+		    nvl(cptt.chap, 0)chapTotal, nvl(crtt.curr, 0)currTotal, nvl2(j.target_id, 1, 0)jjim, nvl(q.qnaTotal, 0) qnaTotal, nvl(r.reviewTotal, 0)reviewTotal, c.*, m.nickname
+		from
+		    (select count(*)qnaTotal, class_id from class_board where board_type = 1 group by class_id)q,
+		    (select count(*)reviewTotal, class_id from class_board where board_type = 4 group by class_id)r,
+		    (select * from jjim where target_type=1 and member_id = <if test="memberId == null">null</if> <if test="memberId != null">#{memberId}</if>)j,
+		    class c,
+		    member m,
+		    (select cl.class_id, cp.chap
+		    from class cl, (select count(chap_id) chap, class_id
+		    from class_chapter
+		    group by class_id) cp
+		    where cl.class_id = cp.class_id(+))cptt,
+		    (select class_id, count(mu.curr_id) curr
+		    from(
+		    select z.class_id, y.chap_id, i.curr_id
+		    from class z, class_chapter y, class_curriculum i
+		    where z.class_id = y.class_id(+)
+		    and y.chap_id = i.chap_id(+))mu
+		    group by class_id)crtt
+		where c.class_id = q.class_id(+)
+		and c.class_id = r.class_id(+)
+		and c.class_id = j.target_id(+)
+		and c.class_id = cptt.class_id(+)
+		and c.class_id = crtt.class_id(+)
+		and c.member_id = m.member_id
+		and c.class_id = #{classId}
+	</select>
+	
+	<!-- 후기평가조회 -->
+	<select id="getClassReview" parameterType="java.lang.Integer" resultType="com.yedam.mohobby.service.classes.ClassReviewVO">
+		select	c.class_id, 
+				nvl(rate.avg,0)avg, 
+				nvl(rate.five,0)five, 
+				nvl(rate.four,0)four, 
+				nvl(rate.three,0)three, 
+				nvl(rate.two,0)two, 
+				nvl(rate.one,0)one, 
+				nvl(rate.zero,0)zero
+		from	class c,
+				(
+				select class_id, 
+				avg(rate)avg, 
+				count(decode(rate, 5, 1))five, 
+				count(decode(rate, 4, 1))four, 
+				count(decode(rate, 3, 1))three,  
+				count(decode(rate, 2, 1))two,
+				count(decode(rate, 1, 1))one,
+				count(decode(rate, 0, 1))zero
+				from class_board where board_type=4 group by class_id
+				)rate
+		where	c.class_id = rate.class_id(+)
+		and		c.class_id = #{classId}
+	</select>
+	
+	<!-- 강의게시글조회 -->
+	<select id="getClassBoardList" parameterType="java.util.Map" resultType="com.yedam.mohobby.service.classes.ClassBoardVO" >
+		select b.*, m.profile_img, m.nickname, nvl(c.cnt, 0)comment_total
+		from class_board b, member m,
+		(select count(*) cnt, target_id from comments
+		where target_type = 1
+		group by target_id)c
+		where b.member_id = m.member_id(+) 
+		and b.board_id = c.target_id(+)
+		and board_type = #{boardType}
+		and class_id = #{classId}
+		<if test="memberId != null">
+		and m.member_id = #{memberId}
+		</if>
+		order by write_date desc
+	</select>
+	
+	<!-- 강의게시글등록 -->
+	<insert id="addClassBoard" parameterType="com.yedam.mohobby.service.classes.ClassBoardVO">
+		<selectKey keyColumn="boardId,writeDate" 
+					keyProperty="boardId,writeDate" 
+					resultType="com.yedam.mohobby.service.classes.ClassBoardVO" 
+					order="AFTER">
+		select board_id, write_date from class_board where board_id in (select NVL(MAX(board_id), 0) from class_board)
+		</selectKey>
+		insert into class_board(
+								board_id,
+								member_id,
+								class_id,
+								board_type,
+								title,
+								content,
+								rate,
+								reply_check,
+								write_date,
+								secret
+								)
+				values(
+						(select NVL(MAX(board_id), 0) + 1 from class_board),
+						#{memberId, jdbcType=VARCHAR},
+						#{classId, jdbcType=INTEGER},
+						#{boardType, jdbcType=INTEGER},
+						#{title, jdbcType=VARCHAR},
+						#{content, jdbcType=VARCHAR},
+						#{rate, jdbcType=INTEGER},
+						#{replyCheck, jdbcType=INTEGER},
+						current_date,
+						#{secret, jdbcType=INTEGER}
+						)
+	</insert>
+	
+	<!-- 커리큘럼 진행율 조회 -->
+	<select id="getCurrProgress"
+			parameterType="com.yedam.mohobby.service.classes.ClassAttendanceVO" 
+			statementType="CALLABLE">
+	{
+	call class_member_attendance_info(
+		#{currId,mode=INOUT,jdbcType=INTEGER},
+		#{memberId,mode=IN, jdbcType=VARCHAR},
+		#{viewProgress,mode=OUT,jdbcType=INTEGER},
+		#{totalViewProgress,mode=OUT,jdbcType=INTEGER}
+	)}
+	
+	</select>
+	
+	<!-- 커리큘럼 단건 진행율 업데이트 -->
+	<update id="updateAttdInfo" parameterType="com.yedam.mohobby.service.classes.ClassAttendanceVO">
+		update class_attendance set view_progress = #{viewProgress} where curr_id = #{currId}
+		and member_id = #{memberId}
+	</update>
+	
+	<!-- 오프라인 강의 출석 -->
+	<insert id="insertOffAttd">
+		insert into class_attendance (member_id, curr_id, attd_date)
+		values (#{memberId}, #{currId}, current_date)
+	</insert>
+	
+	<!-- 오프라인 강의 상태 업데이트 -->
+	<update id="updateOffAttd">
+		update class_attendance set #{type} = current_date
+		where member_id = #{memberId}
+		and curr_id = #{currId}
+	</update>
+	
+	<!-- 강의 결제내역 단건추가 -->
+	<insert id="insertClassPayOne" parameterType="com.yedam.mohobby.service.classes.ClassPayVO">
+		<selectKey keyProperty="payId" resultType="java.lang.Integer" order="BEFORE">
+			select nvl(max(pay_id), 0) + 1 from class_pay
+		</selectKey>
+		insert into class_pay (
+								PAY_ID,
+								STATUS,
+								PG_TYPE,
+								PG_TID,
+								PG_PROVIDER,
+								PAY_METHOD,
+								PAID_AT,
+								PAID_AMOUNT,
+								NAME,
+								MERCHANT_UID,
+								IMP_UID,
+								CUSTOM_DATA,
+								CURRENCY,
+								CARD_QUOTA,
+								CARD_NUMBER,
+								CARD_NAME,
+								BUYER_TEL,
+								BUYER_POSTCODE,
+								BUYER_NAME,
+								BUYER_EMAIL,
+								BUYER_ADDR,
+								BANK_NAME,
+								APPLY_NUM,
+								VBANK_DATE,
+								VBANK_HOLDER,
+								VBANK_NAME,
+								VBANK_NUM,
+								MEMBER_ID,
+								CLASS_ID,
+								DLVY_FEE,
+								DLVY_MEMO,
+								CLASS_PRICE,
+								NEEDS_PRICE,
+								POINT,
+								CLASS_STATUS,
+								BUYER_ADDR_DETAIL
+								)
+				values(
+					#{payId},
+					#{status, jdbcType=VARCHAR},
+					#{pg_type, jdbcType=VARCHAR},
+					#{pg_tid, jdbcType=VARCHAR},
+					#{pg_provider, jdbcType=VARCHAR},
+					#{pay_method, jdbcType=VARCHAR},
+					#{paid_at, jdbcType=INTEGER},
+					#{paid_amount, jdbcType=INTEGER},
+					#{name, jdbcType=VARCHAR},
+					#{merchant_uid, jdbcType=VARCHAR},
+					#{imp_uid, jdbcType=VARCHAR},
+					#{custom_data, jdbcType=VARCHAR},
+					#{currency, jdbcType=VARCHAR},
+					#{card_quota, jdbcType=INTEGER},
+					#{card_number, jdbcType=VARCHAR},
+					#{card_name, jdbcType=VARCHAR},
+					#{buyer_tel, jdbcType=VARCHAR},
+					#{buyer_postcode, jdbcType=VARCHAR},
+					#{buyer_name, jdbcType=VARCHAR},
+					#{buyer_email, jdbcType=VARCHAR},
+					#{buyer_addr, jdbcType=VARCHAR},
+					#{bank_name, jdbcType=VARCHAR},
+					#{apply_num, jdbcType=VARCHAR},
+					#{vbank_date, jdbcType=DATE},
+					#{vbank_holder, jdbcType=VARCHAR},
+					#{vbank_name, jdbcType=VARCHAR},
+					#{vbank_num, jdbcType=VARCHAR},
+					#{memberId, jdbcType=VARCHAR},
+					#{classId, jdbcType=INTEGER},
+					#{dlvyFee, jdbcType=INTEGER},
+					#{dlvyMemo, jdbcType=VARCHAR},
+					#{classPrice, jdbcType=INTEGER},
+					#{needsPrice, jdbcType=INTEGER},
+					#{point, jdbcType=INTEGER},
+					#{classStatus, jdbcType=INTEGER},
+					#{buyer_addr_detail, jdbcType=VARCHAR}
+				)
+	</insert>
+	
+	<!-- 강의 결제내역 단건조회 -->
+	<select id="getClassPayOne" parameterType="com.yedam.mohobby.service.classes.ClassPayVO" resultType="com.yedam.mohobby.service.classes.ClassPayVO">
+		select * from class_pay
+		where class_id = #{classId}
+		and member_id = #{memberId}
+	</select>
+	
+	<!-- 강의 준비물 조회 -->
+	<select id="getClassNeedsInfo" parameterType="java.lang.Integer" resultType="com.yedam.mohobby.service.classes.ClassNeedsVO">
+		select * from class_needs where class_id = #{classId}
+	</select>
+	
+	<!-- 강의게시글수정 -->
+	<update id="updateClassBoard" parameterType="com.yedam.mohobby.service.classes.ClassBoardVO">
+		update class_board set
+		title = #{title}
+		<if test="content != null">
+		,content = #{content}
+		</if>
+		<if test="rate != null">
+		,rate = #{rate}
+		</if>
+		<if test="replyCheck != null">
+		,reply_check = #{replyCheck}
+		</if>
+		<if test="secret != null">
+		,secret = #{secret}
+		</if>		
+		where board_id = #{boardId}
+	</update>
+	
+	<!-- 강의게시글삭제 -->
+	<delete id="deleteClassBoard" parameterType="java.lang.Integer">
+		delete from class_board where board_id = #{boardId}
+	</delete>
+	
+	<!-- 찜등록 -->
+	<insert id="addJjim" parameterType="com.yedam.mohobby.service.communal.JjimVO">
+		insert into jjim(target_id, target_type, member_id) values(#{targetId}, 1, #{memberId})
+	</insert>
+	
+	<!-- 찜삭제 -->
+	<delete id="deleteJjim" parameterType="com.yedam.mohobby.service.communal.JjimVO">
+		delete from jjim where target_id = #{targetId} and target_type = 1 and member_id = #{memberId}
+	</delete>
+	
+	<!-- 내 강의 목록 조회 -->
+	<select id="getMyCourse" resultType="com.yedam.mohobby.service.classes.ClassesVO">
+		select c.*, nvl((select board_id from class_board where class_id = c.class_id and  member_id = 'user1' and board_type = 4), 0) reviewyn
+		from class c
+		where class_id in (select class_id
+		                    from class_pay
+		                    where member_id = #{memberId}
+		                    <if test="classStatus != null">
+		                    and class_status = #{classStatus}
+		                    </if>
+		                    )
+	</select>
+	
+	<!-- 내 강의 진행율 조회 -->
+	<select id="getMyCourseProgress" resultType="java.util.HashMap">
+		select total_view_progress, decode(last_curr_id, null, min, last_curr_id)last_curr_id
+		from (select round(sum(view_progress)/count(curr_id))total_view_progress, min(curr_id) min
+		        from
+		            (select c.curr_id, nvl(a.view_progress, 0) view_progress
+		            from class_curriculum c,
+		                (select *
+		                from class_attendance
+		                where member_id = #{memberId}) a
+		            where c.class_id = #{classId}
+		            and c.curr_id = a.curr_id(+))),
+		        (select min(c.curr_id) last_curr_id
+		        from class_curriculum c,
+		            (select *
+		            from class_attendance
+		            where member_id = #{memberId}) a
+		        where c.class_id = #{classId}
+		        and view_progress <![CDATA[<]]> 100
+		        and c.curr_id = a.curr_id(+))
+	</select>
+	
+	<!-- 내 수료증 발급 가능 강의 목록 -->
+	<select id="getMyCourseCertificate" resultType="com.yedam.mohobby.service.classes.ClassesVO">
+		select s.*, t.total_view_progress, case when s.cert_standard > t.total_view_progress then 'n'
+		                                        else 'y'
+		                                    end as certyn
+		from class s,
+		    (   select round(sum(view_progress)/count(curr_id))total_view_progress, class_id
+		        from
+		            (select c.curr_id, nvl(a.view_progress, 0) view_progress, c.class_id
+		            from class_curriculum c,
+		                (select *
+		                from class_attendance
+		                where member_id = #{memberId}) a
+		            where c.class_id in (select class_id from class where cert_able = 1)
+		            and c.curr_id = a.curr_id(+))
+		        group by class_id)t
+		where s.class_id = t.class_id(+)
+		and s.class_id in (select class_id
+		                    from class_pay
+		                    where member_id = #{memberId}
+		                    and class_status = 1)
+		and s.class_id in (select class_id from class where cert_able = 1)
+	</select>
+	
+	
+	<!-- 출결관리 -->
+	 
+	<!-- 오늘 기준 커리큘럼 출결 정보 -->
+	<select id="getTodayAttendanceInfo" resultType="com.yedam.mohobby.service.classes.ClassAttendanceVO">
+		select 
+		        c.class_id, 
+		        c.class_name, 
+		        c.address, 
+		        c.start_date, 
+		        c.end_date, 
+		        c.start_time, 
+		        c.end_time, 
+		        attd.attd_date, 
+		        attd.out_date, 
+		        attd.comeback_date, 
+		        attd.leave_date, 
+		        attd.record_type, 
+		        attd.late_check,
+		        attd.exit_date,
+		        rr.curr_id,
+		        rr.class_date
+		from 
+		        class c, 
+		        class_pay p, 
+		        class_curriculum rr, 
+		        class_attendance attd
+		where 
+		        class_type=1
+		and 
+		        current_date between start_date and end_date
+		and 
+		        p.member_id = #{memberId}
+		and 
+		        c.class_id = p.class_id(+)
+		and 
+		        c.class_id = rr.class_id
+		and
+		        to_char(rr.class_date, 'YYYYMMDD') = to_char(current_date, 'YYYYMMDD')
+		and 
+		        rr.curr_id = attd.curr_id(+)
+	</select>
+	<!-- 오늘 기준 출결 통계 -->
+	<select id="getTodayAttendanceCalc" resultType="com.yedam.mohobby.service.classes.ClassAttendanceVO">
+		select 
+		        c.class_id, 
+		        sum(case when a.record_type=0 then 1 else 0 end)sum_attd, 
+		        sum(case when a.out_date is not null then 1 else 0 end)sum_out, 
+		        sum(case when a.leave_date is not null then 1 else 0 end)sum_leave, 
+		        sum(case when a.record_type=1 then 1 else 0 end)sum_absent, 
+		        sum(nvl(a.late_check, 0))sum_late
+		from 
+		        class_attendance a, 
+		        class_curriculum c
+		where 
+		        a.member_id = #{memberId}
+		and 
+		        a.curr_id = c.curr_id(+)
+		and
+		        c.class_id = #{classId}
+		group by 
+		        c.class_id
+	</select>
+	<!-- 오늘 기준 과정 진행율 -->
+	<select id="getTodayClassProgress" resultType="com.yedam.mohobby.service.classes.ClassAttendanceVO">
+		select total, gone, round(gone/total*100, 1) progress
+		from
+		
+		(select count(*) total, class_id
+		from class_curriculum
+		group by class_id) total,
+		
+		(select count(*) gone, class_id
+		from class_curriculum
+		where class_date <![CDATA[<]]> current_date
+		group by class_id) gone
+		
+		where total.class_id = gone.class_id
+		and   total.class_id = #{classId}
+	</select>
+	<!-- 수업없는 날 강의 정보 -->
+	<select id="getNoneClassInfo" resultType="com.yedam.mohobby.service.classes.ClassAttendanceVO">
+		select 
+		        c.class_id, 
+		        c.class_name, 
+		        c.address, 
+		        c.start_date, 
+		        c.end_date, 
+		        c.start_time, 
+		        c.end_time
+		from 
+		        class c, 
+		        class_pay p
+		where 
+		        class_type=1
+		and 
+		        current_date between start_date and end_date
+		and 
+		        p.member_id = #{memberId}
+		and 
+		        c.class_id = p.class_id(+)
+	</select>
+	<!-- 출결 정보 입력 -->
+	<insert id="insertAttendanceInfo">
+		insert into class_attendance 
+								 		(
+										curr_id
+										,member_id
+										,${column}
+										,late_check
+										)
+								values (
+										#{currId}
+										,#{memberId}
+										<if test="type==0">										
+										,to_date(#{value}, 'YYYY-MM-DD HH24:MI:SS')
+										</if>
+										<if test="type==3">
+										,to_number(#{value})
+										</if>
+										,#{lateCheck, jdbcType=INTEGER}
+										)
+														
+	</insert>
+	<!-- 출결 정보 업데이트 -->
+	<update id="updateAttendanceInfo">
+		<selectKey keyProperty="count" keyColumn="count" resultType="java.lang.Integer" order="BEFORE">
+			select MOD(count(out_date) + count(leave_date) + sum(nvl(late_check, 0)), 3) count
+			from class_attendance 
+			where member_id = #{memberId}
+			and curr_id in (select curr_id from class_curriculum where class_id = (select class_id from class_curriculum where curr_id = #{currId}))
+		</selectKey>
+		update class_attendance 
+		set	${column} = to_date(#{value}, 'YYYY-MM-DD HH24:MI:SS')
+		<if test="(type==4 or type==1) and count!=0">
+		, record_type = 0
+		, view_progress = 100
+		</if>
+		<if test="(type==4 or type==1) and count==0">
+		, record_type = 1
+		, view_progress = 0
+		</if>
+		where curr_id = #{currId}
+		and member_id = #{memberId}
+	</update>
+</mapper>

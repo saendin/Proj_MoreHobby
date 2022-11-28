@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xsi:schemaLocation="http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+      
+   <!-- datasource connection pool -->
+  <bean id="hikariConfig" class="com.zaxxer.hikari.HikariConfig">
+      <property name="driverClassName" value="net.sf.log4jdbc.sql.jdbcapi.DriverSpy"></property>
+      <property name="jdbcUrl" value="jdbc:log4jdbc:oracle:thin:@132.226.170.159:1521:xe"></property>
+      <property name="username" value="mohobby"></property>
+      <property name="password" value="mohobby"></property>
+   	  <property name="maximumPoolSize" value="3"/>
+   </bean>
+	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
+		destroy-method="close">
+		<constructor-arg ref="hikariConfig" />
+	</bean>
+    
+
+
+       <!-- mybatis SqlSessionFactory  -->
+	<bean id="sqlSessionFactory"
+		class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="configLocation"
+			value="classpath:mybatis-config.xml" />
+		<property name="dataSource" ref="dataSource" />
+		<property name="plugins">
+	    <array>
+	      <bean class="com.github.pagehelper.PageInterceptor">
+	        <property name="properties">
+	          <value>
+	           	helperDialect=oracle
+	           	params=count=countSql
+	           	keepsSubSelectOrderBy=true
+	           	keepOrderBy=true
+	          </value>
+	        </property>
+	      </bean>
+	    </array>
+  </property>
+	</bean>
+
+     
+      <!-- < mapper scan  -->
+	<mybatis-spring:scan
+		base-package="com.yedam.mohobby.mapper.*" />
+</beans>

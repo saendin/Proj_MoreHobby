@@ -1,0 +1,68 @@
+#container {
+  margin: 0 auto;
+  width: 80%;
+}
+
+#wrap {
+  width: 800px;
+}
+
+#mdi-dots-vertical {
+  float: right;
+}
+
+#image_box {
+  position: relative;
+  width: 550px;
+  height: 500px;
+}
+
+.image_icon{
+  position: absolute;
+  left: 625px;
+  top: 30px;
+  z-index:1;
+  color: white;
+}
+
+.box {
+  display: inline-block;
+}
+
+#like_box {
+  width: 550;
+  margin: 0 auto;
+}
+
+#content_box {
+  padding: 0 20px;
+}
+
+#hashtag {
+  color: navy;
+  cursor: pointer;
+}
+
+div.user.text-overline {
+  display: inline-block;
+}
+
+#hashtagGroup {
+  margin-left: 10px;
+}
+
+.container {
+  width: 85%;
+  margin-top: 30px;
+}
+
+.user {
+  display: inline-block;
+  margin-left: 5px;
+  margin-top: 40px;
+}
+
+.flex {
+  display: flex;
+  height: 150px;
+}

@@ -1,0 +1,367 @@
+#att_zone {
+    width: 660px;
+    min-height: 150px;
+    padding: 10px;
+    border: 1px dotted #00f;
+  }
+  
+  #att_zone:empty:before {
+    content: attr(data-placeholder);
+    color: #999;
+    font-size: 0.9em;
+  }
+
+  .plus_btn{
+    margin-left:20px;
+    border-radius: 20px;
+    padding:10px;
+    color: green;
+    font-weight: bold;
+    font-size: x-large;
+    display: inline-block; 
+    margin-right:10px;
+    cursor:pointer;
+  }
+  .file_wrap{
+    flex-wrap:wrap;
+    justify-content: center;
+    align-items:center;
+  }
+
+  /* .img_wrap{
+    position:relative;
+    display: inline-flex;
+  } */
+
+  .img_box{
+    position:relative;
+    margin-left: 35px;
+    margin-right: 10px;
+    margin-top: 10px;
+  }
+
+  .img_box:hover .del_btn,
+  .img_box:focus .del_btn {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: absolute;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.3);
+  }
+  .del_btn{
+    display: none;
+  }
+
+  .del_icon{
+    /* top: -10px; */
+    left: 40px;
+    position:absolute;
+    color:#c76363b4;
+    font-weight: bold;
+    border-radius: 20px;
+    padding:10px;
+    font-size: 100px;
+    cursor: pointer;
+  }
+  
+
+  
+  /* ///////////// */
+  .main-container {
+    min-width: 800px;
+    
+    margin: 0 auto;
+}
+
+.room-deal-information-container {
+    height: 400px;
+    margin-top: 50px;
+    color: #222222;
+    /* border: 1px solid #dddddd; */
+    border-radius: 8px;
+}
+
+.room-deal-information-title {
+    text-align: center;
+    font-size: 18px;
+    line-height: 60px;
+    border-bottom: 1px solid #dddddd;
+}
+
+.room-deal-information-content-wrapper {
+    min-height: 50px;
+    display: flex;
+}
+
+.room-deal-informtaion-content-title {
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 150px;
+    background-color: #f9f9f9;
+}
+
+.room-deal-information-content {
+    width: 100%;
+    font-size: 14px;
+}
+
+.room-deal-option-selector {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+}
+
+.room-deal-option-item {
+    width: 100px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #cccccc;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.room-deal-option-item:last-child {
+    margin-left: 10px;
+}
+
+.room-deal-option-notice {
+    margin-left: auto;
+    font-size: 14px;
+    color: #888888;
+}
+
+.room-deal-option-item-deposit {
+    margin-left: 10px;
+}
+
+.room-deal-information-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.room-deal-information-option {
+    padding: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.room-deal-information-option:last-child {
+    border-bottom: 1px solid #dddddd;
+}
+
+.room-deal-information-item-type {
+    font-size: 13px;
+    color: #fff;
+    background-color: #61b6e5;
+    min-width: 50px;
+    height: 26px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 3px;
+}
+
+.room-deal-information-item-wrapper {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+    height: 46px;
+    width: 100%;
+}
+
+.room-deal-information-item-wrapper>input {
+    border: 1px solid #dddddd;
+    width: 140px;
+    height: 100%;
+    padding: 0 15px;
+    font-size: 15px;
+}
+
+.room-deal-inforamtion-won {
+    margin: 0 10px;
+}
+
+.room-deal-information-example {
+    color: #888888;
+}
+
+.room-deal-information-option:not(:first-child) {
+    margin-top: 10px;
+}
+
+.room-deal-inforamtion-divide {
+    font-size: 22px;
+    margin: 0 8px;
+    color: #222222;
+    font-weight: 100;
+}
+
+.room-deal-close-button-wrapper {
+    margin-left: auto;
+    cursor: pointer;
+}
+
+.room-deal-close-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background-color: #666666;
+    color: rgb(220, 220, 220);
+}
+
+.room-deal-cliked {
+    background-color: rgb(235, 235, 235);
+    color: rgb(170, 170, 170);
+}
+
+.room-file-upload-example {
+    height: 100%;
+}
+
+.room-write-content-container {
+    border-top: 1px solid #dddddd;
+    min-height: 260px;
+}
+
+.room-picture-notice {
+    margin: 20px;
+    padding: 20px 40px;
+    border: 1px solid #dddddd;
+}
+
+.file-preview-content-container {
+    height: 100%;
+}
+
+.room-file-upload-wrapper {
+    margin: 20px;
+    border: 1px solid #dddddd;
+    background-color: #f4f4f4;
+    min-height: 350px;
+    font-size: 15px;
+    color: #888888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.room-file-upload-example-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* height: 100%;
+width: 100%; */
+}
+
+.room-file-image-example-wrapper {
+    text-align: center;
+}
+
+.room-file-notice-item {
+    margin-top: 5px;
+    text-align: center;
+}
+
+.room-file-notice-item-red {
+    color: #e16e1c;
+}
+
+.image-box {
+    margin-top: 30px;
+    padding-bottom: 20px;
+    text-align: center;
+}
+
+.image-box input[type='file'] {
+    position: absolute;
+    width: 0;
+    height: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+}
+
+.image-box label {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #2ac187;
+    color: #fff;
+    vertical-align: middle;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 20px;
+}
+
+.file-preview-wrapper {
+    padding: 10px;
+    position: relative;
+}
+
+.file-preview-wrapper>img {
+    position: relative;
+    width: 200px;
+    height: 180px;
+    z-index: 10;
+    border-radius: 10px;
+}
+
+.file-preview-container {
+    height: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+
+.room-write-button-wrapper {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #222222;
+}
+
+.room-write-button-wrapper>div {
+    width: 160px;
+    height: 50px;
+    border: 1px solid #2ac187;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.room-write-button {
+    margin-left: 15px;
+    color: #fff;
+    background-color: hsl(155, 74%, 52%);
+}
+
+.room-write-button:hover {
+    opacity: 0.8;
+}
+.file_btn{
+font-weight: 600; 
+color:white; 
+background-color: #ec68a5; 
+border-radius: 15px; 
+padding:8px;
+width:65px;
+text-align: center;
+}
+
+.file_wrap{
+width:200px; 
+height:200px;  
+display: inline-block;
+}

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.mohobby.mapper.user.MemPickKeywordMapper">
+
+<!-- 전체 관심사 대분류 목록 -->
+<select id="getAllCatg" resultType="com.yedam.mohobby.service.communal.KeywordVO">
+select keyword_id, keyword_name from keyword
+where keyword_id like '1___'
+</select>
+
+ <!-- 회원 관심사 list select -->
+ 	<select id="selectPickKeywordList" parameterType="String" resultType="com.yedam.mohobby.service.user.MemPickKeywordVO">
+ 		select a.member_id, a.keyword_id, b.keyword_name
+		from member_pick_keyword a join keyword b
+		on a.keyword_id = b.keyword_id
+		where member_id = #{memberId}
+ 	</select>
+ 	
+ <!-- 회원 관심사 insert -->
+   <insert id="insertPickKeyword" parameterType="com.yedam.mohobby.service.user.MemPickKeywordVO">
+   		insert into member_pick_keyword (member_id, keyword_id) values (#{memberId}, #{keywordId})   
+   </insert>
+   
+   <!-- 회원 관심사 delete -->
+   <delete id="deletePickKeyword" parameterType="com.yedam.mohobby.service.user.MemPickKeywordVO">
+   		delete from member_pick_keyword where member_id = #{memberId} and keyword_id = #{keywordId}
+   
+   </delete>
+</mapper>

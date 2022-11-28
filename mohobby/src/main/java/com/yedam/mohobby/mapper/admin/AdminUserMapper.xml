@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.mohobby.mapper.admin.AdminUserMapper">
+
+
+<!-- 각 달별로 가입한 회원 수 -->
+<select id="signUpMemList" parameterType="java.util.List" resultType="integer">
+select count(*) as count
+from member
+where 
+<foreach collection="list" item="item" index="index">
+<![CDATA[ reg_date >= #{item.startDate} and reg_date < #{item.endDate} ]]>
+</foreach> 
+</select>
+
+
+<!-- 각 달별로 탈퇴한 회원 수 -->
+<select id="leaveMemList" parameterType="java.util.List" resultType="integer">
+select count(*) as count
+from member
+where 
+<foreach collection="list" item="item" index="index">
+<![CDATA[ del_date >= #{item.startDate} and del_date < #{item.endDate} ]]>
+</foreach>
+</select>
+
+
+
+</mapper>

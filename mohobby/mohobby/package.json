@@ -1,0 +1,96 @@
+{
+  "name": "mohobby",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.2.0",
+    "@fortawesome/free-brands-svg-icons": "^6.2.0",
+    "@fortawesome/free-regular-svg-icons": "^6.2.0",
+    "@fortawesome/free-solid-svg-icons": "^6.2.0",
+    "@saeris/vue-spinners": "^1.0.8",
+    "@yaireo/tagify": "^4.16.4",
+    "artplayer": "^4.5.8",
+    "axios": "^0.27.2",
+    "bootstrap": "^4.6.2",
+    "bootstrap-vue": "^2.22.0",
+    "core-js": "^3.8.3",
+    "css-loader": "^6.7.1",
+    "iamport": "^0.3.4",
+    "jquery": "^3.6.1",
+    "lodash": "^4.17.21",
+    "material-design-icons-iconfont": "^6.7.0",
+    "moment": "^2.29.4",
+    "next-images": "^1.8.4",
+    "quill-drag-and-drop-module": "^0.3.0",
+    "quill-image-drop-module": "^1.0.3",
+    "quill-image-resize-module": "^3.0.0",
+    "quill-yang-image-paste": "^1.0.3",
+    "sockjs-client": "^1.6.1",
+    "style-loader": "^3.3.1",
+    "url-loader": "^4.1.1",
+    "v-calendar": "^2.4.1",
+    "v-upload-image": "^1.0.0",
+    "v-viewer": "^1.6.4",
+    "vue": "^2.7.10",
+    "vue-debounce": "^4.0.0",
+    "vue-iamport": "^0.1.2",
+    "vue-infinite-loading": "^2.4.5",
+    "vue-lodash": "^2.1.2",
+    "vue-media-upload": "^1.1.4",
+    "vue-moment": "^4.1.0",
+    "vue-plugin-load-script": "^2.1.1",
+    "vue-poll": "^0.1.8",
+    "vue-quill-editor": "^3.0.6",
+    "vue-router": "^3.5.1",
+    "vue-sweetalert2": "^5.0.5",
+    "vue2-datepicker": "^3.11.0",
+    "vue2-viewer": "^1.0.3",
+    "vuetify": "^2.6.0",
+    "vuex": "^3.6.2",
+    "vuex-persistedstate": "^4.1.0",
+    "webpack-dev-server": "^4.11.1",
+    "webstomp-client": "^1.2.6"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.16",
+    "@babel/eslint-parser": "^7.12.16",
+    "@expo/webpack-config": "^0.17.2",
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-eslint": "~5.0.0",
+    "@vue/cli-plugin-router": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "eslint": "^7.32.0",
+    "eslint-plugin-vue": "^8.0.3",
+    "file-loader": "^6.2.0",
+    "sass": "~1.32.0",
+    "sass-loader": "^10.0.0",
+    "vue-cli-plugin-vuetify": "~2.5.8",
+    "vue-template-compiler": "^2.6.14",
+    "vuetify-loader": "^1.7.0"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "@babel/eslint-parser"
+    },
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "proxy": "http://localhost:8088"
+}

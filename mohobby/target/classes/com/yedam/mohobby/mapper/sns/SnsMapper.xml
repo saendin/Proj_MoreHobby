@@ -1,0 +1,925 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yedam.mohobby.mapper.sns.SnsMapper">
+<!-- 
+/**
+ * @create 22/10/08
+ * @author sunjin
+ * @title sns controller
+ */
+-->
+   <!-- 
+   
+      유저
+   
+    -->
+
+    
+    
+   <!-- 
+   
+         피드
+          
+      -->
+        
+       <!-- 새로운 postId 생성 -->
+      <select id="getPostId" resultType="Integer">
+      	SELECT NVL(MAX(post_id),0)+1 FROM sns_post
+      </select>
+      
+      
+      <!-- 피드등록 -->
+      <insert id="insertFeed" parameterType="com.yedam.mohobby.service.sns.SnsPostVO">
+         INSERT INTO sns_post (
+                                post_id,
+                                member_id,
+                                hashtag,
+                                content,
+                                write_date,
+                                thumbnail,
+                                likes,
+                                cmts,
+                                sec_post
+                              )
+                      VALUES  (
+                               #{ postId },
+                               #{ memberId },
+                               #{ hashtag, jdbcType=VARCHAR },
+                               #{ content },
+                               CURRENT_DATE,
+                               #{ thumbnail },
+                               0,
+                               0,
+                               #{ secPost }
+                              )
+    </insert>
+    
+    
+    <!-- 미디어등록 -->
+      <insert id="insertMedia" parameterType="com.yedam.mohobby.service.sns.SnsMediaVO">
+      INSERT INTO sns_media (
+                        media_id,
+                        post_id,
+                        extension,
+                        path,
+                        file_name,
+                        file_real_name,
+                        dir_name
+                       )
+                  VALUES(
+                        media_id_seq.nextval,
+                        #{ postId },
+                        #{ extension },
+                        #{ path },
+                        #{ fileName },
+                        #{ fileRealName },
+                        #{ dirName }
+                       )
+   </insert>
+   
+   
+   <!-- 피드수정 - 내용, 해시태그 -->
+   <update id="updateFeed" parameterType="com.yedam.mohobby.service.sns.SnsPostVO">
+      UPDATE sns_post 
+         SET content = #{ content }, 
+             hashtag = #{ hashtag }
+       WHERE post_id = #{ postId }
+   </update>
+   
+   
+   <!-- 피드삭제 -->
+   <delete id="deleteFeed" parameterType="Integer">
+         {CALL delete_sns_feed(#{ postId, mode=IN })}
+   </delete>
+   
+   
+   <!-- 비밀게시글로 전환 -->
+    <update id="changeSecPost" parameterType="com.yedam.mohobby.service.sns.SnsPostVO">
+       UPDATE sns_post 
+          SET sec_post = #{ secPost }
+        WHERE post_id = #{ postId }
+   </update>
+
+   
+   
+   <!-- 강사피드조회(좋아요 순 top20) -->
+   <select id="hotLecturerList" resultType="com.yedam.mohobby.service.sns.SnsPostVO">
+<![CDATA[ SELECT *
+           FROM ((
+               SELECT s.post_id
+                     ,s.member_id
+                     ,m.profile_img
+                     ,s.content
+                     ,s.thumbnail
+                     ,s.likes
+                     ,s.cmts
+                     ,s.sec_post
+                    
+                 FROM sns_post s 
+                 JOIN member m
+                   ON(s.member_id = m.member_id)
+                 
+                WHERE m.role in (1,3)
+                ORDER BY likes DESC
+              ) S JOIN
+              (
+               SELECT count(post_id) imgs, post_id
+                 FROM sns_media
+                GROUP BY post_id 
+               ) IMGS_CNT
+           ON (s.post_id=IMGS_CNT.post_id))
+         WHERE sec_post = 0
+           AND ROWNUM <=  20 ]]>
+   </select>
+   
+      
+   <!-- 최신피드조회 -->
+   <!--  <select id="newList" resultType="com.yedam.mohobby.service.sns.SnsPostVO">
+      SELECT *
+        FROM (   sns_post s
+              JOIN
+                  (  SELECT count(post_id) imgs, post_id
+                       FROM sns_media
+                      GROUP BY post_id 
+                  ) IMGS_CNT
+                 ON (s.post_id=IMGS_CNT.post_id)
+             )
+      WHERE sec_post = 0
+       ORDER BY s.post_id DESC
+   </select> -->
+   <!-- 유저o- 취미기반 인기강사피드조회 top20 -->
+
+   <!-- 인기피드조회 -->
+  <!--  <select id="hotList" parameterType="String" resultType="com.yedam.mohobby.service.sns.SnsPostVO">
+      SELECT *
+        FROM (   sns_post s
+               JOIN
+                  (  SELECT count(post_id) imgs, post_id
+                       FROM sns_media
+                      GROUP BY post_id 
+                  ) IMGS_CNT
+                 ON (s.post_id=IMGS_CNT.post_id)
+             )
+       WHERE sec_post = 0
+       ORDER BY s.likes DESC, s.post_id DESC
+   </select> --> 
+   
+   
+<!--       <select id="allList" resultType="com.yedam.mohobby.service.sns.SnsPostVO">
+      SELECT *
+        FROM (   sns_post s
+              JOIN
+                  (  SELECT count(post_id) imgs, post_id
+                       FROM sns_media
+                      GROUP BY post_id 
+                  ) IMGS_CNT
+                 ON (s.post_id=IMGS_CNT.post_id))
+       WHERE sec_post = 0
+       <if test='memberId != ""'>
+       		AND s.member_id NOT IN( #{ memberId } )
+       </if>
+	   <if test='moreBtn != "moreBtn"'>
+	    	AND<![CDATA[  ROWNUM <=  12 ]]>
+	   </if>
+       <if test='moreBtn == "moreBtn" and !orderCond'>
+       	ORDER BY
+          <choose>
+	        <when test='orderCond == "sortLike"'>s.likes DESC, s.cmts DESC, s.post_id DESC</when>
+	        <when test='orderCond == "sortId"'>s.post_id DESC</when>
+    	</choose>
+	  </if>
+   </select> -->
+   
+      <!-- 팔로잉 피드 조회 (비밀글 빼고) -->
+<!--    <select id="getFollowingFeeds" parameterType="String" resultType="com.yedam.mohobby.service.sns.SnsPostVO">
+		SELECT * FROM (
+                        SELECT  post_id,
+                                member_id,
+                                thumbnail,
+                                likes,
+                                cmts
+                         FROM sns_post
+                        WHERE member_id IN (
+	                                         SELECT following_id
+	                                         FROM follow
+	                                         WHERE follower_id = #{ memberId }
+	                                        )
+                          AND sec_post = 0
+                            
+                     ) s 
+                JOIN (
+                      SELECT
+                          COUNT(post_id) imgs, post_id  
+                      FROM sns_media
+                      GROUP BY post_id
+                      
+                     ) IMGS_CNT 
+                 ON (s.post_id = IMGS_CNT.post_id)
+             <where>
+             	<if test='moreBtn != "moreBtn"'>
+              		<![CDATA[  ROWNUM <=  4 ]]>
+             	</if>
+             </where>
+             <if test='moreBtn == "moreBtn" and !orderCond'>
+		       	ORDER BY
+		          <choose>
+			        <when test='orderCond == "sortLike"'>s.likes DESC, s.cmts DESC, s.post_id DESC</when>
+			        <when test='orderCond == "sortId"'>s.post_id DESC</when>
+		    	</choose>
+			 </if>
+   </select> -->
+
+
+
+   <!-- 전체피드조회 회원/비회원
+   		회원이지만 팔로잉이 없을 경우는 전체 목록이 뜨도록..,,, 조건을 어덯게 걸 수 있을지 pl/sql?-->
+   <select id="allList" resultType="com.yedam.mohobby.service.sns.SnsPostVO">
+      SELECT s.*
+      	<if test='memberId != ""'>
+      	    ,( SELECT COUNT(following_id)
+                 FROM follow
+                WHERE follower_id = #{ memberId } ) FOLLOWING_CNT    
+      	</if>
+       FROM (
+                 sns_post s 
+            	JOIN (  
+	            		  SELECT count(post_id) imgs, post_id
+	                        FROM sns_media
+	                    GROUP BY post_id 
+	                 )IMGS_CNT
+	              ON (s.post_id=IMGS_CNT.post_id)
+            )
+	  WHERE sec_post = 0
+      <if test = 'memberId != ""'>
+    	AND member_id IN (
+		               		SELECT following_id
+		                      FROM follow
+		                     WHERE follower_id = #{ memberId }
+	    				 )
+      </if>            
+	  <if test='moreBtn != "moreBtn"'>
+	    AND<![CDATA[  ROWNUM <=  8 ]]>
+	  </if>
+      <if test='moreBtn == "moreBtn" and orderCond != ""'>
+       	ORDER BY
+        <choose>
+	       <when test='orderCond == "sortLike"'>s.likes DESC, s.cmts DESC, s.post_id DESC</when>
+	       <when test='orderCond == "sortId"'>s.post_id DESC</when>
+        </choose>
+	  </if>
+   </select>
+
+   <!-- 팔로잉제외 피드 제외한 나머지 피드 조회 (최신순) -->
+   <select id="getNoFollowingFeeds" parameterType="String" resultType="com.yedam.mohobby.service.sns.SnsPostVO">
+		SELECT * FROM (
+                        SELECT  post_id,
+                                member_id,
+                                thumbnail,
+                                likes,
+                                cmts
+                        FROM sns_post
+                        WHERE member_id NOT IN (
+		                                         SELECT following_id
+		                                         FROM follow
+		                                         WHERE follower_id = #{ memberId }
+		                                        )
+                          AND member_id NOT IN( #{ memberId } )
+                          AND sec_post = 0
+                            
+                     ) s JOIN (
+                                SELECT COUNT(post_id) imgs, post_id
+                                  FROM sns_media
+                              GROUP BY post_id
+                              ) IMGS_CNT
+                 ON (s.post_id=IMGS_CNT.post_id)
+             <where>
+	           	 <if test='moreBtn != "moreBtn"'>
+	             	<![CDATA[ ROWNUM <=  8 ]]>
+	             </if>
+             </where>
+             <if test='moreBtn == "moreBtn" and orderCond != ""'>
+		       	ORDER BY
+		          <choose>
+			        <when test='orderCond == "sortLike"'>s.likes DESC, s.cmts DESC, s.post_id DESC</when>
+			        <when test='orderCond == "sortId"'>s.post_id DESC</when>
+		    	</choose>
+			  </if>
+   </select>    
+
+   
+   
+
+   
+   <!-- 취미쪼개기 -->
+   
+   
+   <!-- 프로필 조회
+      유저아이디, 유저별명, 전체 게시글 수, 팔로워수, 팔로잉수 --> 
+   <select id="getProfile" parameterType="String" resultType="com.yedam.mohobby.service.sns.SnsProfileVO">
+      SELECT m.member_id,
+             m.role, 
+             m.nickname, 
+             m.profile_img, 
+             m.intro, 
+           (  SELECT COUNT(post_id)
+              FROM sns_post
+              WHERE member_id = m.member_id ) POST_CNT,
+              
+           (  SELECT COUNT(follower_id)
+              FROM follow
+              WHERE following_id = m.member_id ) FOLLOWER_CNT,
+              
+           (  SELECT COUNT(following_id)
+              FROM follow
+              WHERE follower_id = m.member_id ) FOLLOWING_CNT            
+       FROM member m
+      WHERE m.member_id = #{ memberId }
+   </select>
+   
+   <!-- 멤버의 등록된 취미 키워드 가져오기 -->
+   <select id="getUserHobbies" resultType="com.yedam.mohobby.service.user.MemPickKeywordVO">
+   		SELECT k.keyword_name 
+   		  FROM keyword k, member_pick_keyword m
+   		 WHERE k.keyword_id = m.keyword_id
+   		   AND member_id = #{ memberId }
+   </select>
+   
+   
+   <!-- 유저피드 조회 -->
+   <select id="getUserFeed" resultType="com.yedam.mohobby.service.sns.SnsFeedVO">
+      SELECT *
+        FROM (   sns_post s
+              JOIN
+                  (  SELECT count(post_id) imgs, post_id
+                       FROM sns_media
+                      GROUP BY post_id 
+                  ) IMGS_CNT
+                 ON (s.post_id=IMGS_CNT.post_id))
+      WHERE member_id = #{ memberId }
+      <if test='secPost != null and secPost != ""'>
+      	AND sec_post = 0
+      </if>
+      ORDER BY s.post_id DESC
+   </select>
+   
+   
+   <!-- 피드상세조회 -->
+   <select id="getFeedDetail" parameterType="com.yedam.mohobby.service.sns.SnsFeedVO" resultType="com.yedam.mohobby.service.sns.SnsFeedVO">
+      SELECT mem.profile_img, mem.role, k.*
+      FROM member mem,
+         (
+           SELECT nvl2(m.target_id, 1, 0) like_status, c.*
+             FROM sns_post c,
+             
+                (   
+	                SELECT * FROM jjim 
+	                 WHERE target_type = 2 
+	                 AND member_id = 
+	                 <if test="memberId == null"> null</if>
+	                 <if test="memberId != null">#{ memberId }</if>
+                 ) m,
+                (
+                   SELECT COUNT(*)JJIM, target_id 
+                     FROM jjim 
+                    WHERE target_type = 2 
+                    GROUP BY target_id
+                ) x
+                
+           WHERE c.post_id = m.target_id(+)
+             AND c.post_id = x.target_id(+)
+         ) k
+         
+      WHERE mem.member_id = k.member_id
+        AND post_id = #{ postId }
+      ORDER BY post_id
+   </select>
+   
+   
+   <!-- 내 비밀글 모아보기 -->
+   <select id="getMyArchive" parameterType="com.yedam.mohobby.service.sns.SnsFeedVO" resultType="com.yedam.mohobby.service.sns.SnsFeedVO">  
+       SELECT nvl2(m.target_id, 1, 0) like_status, imgs_cnt.imgs imgs, c.*
+         FROM sns_post c,
+                       (   
+                           SELECT * FROM jjim 
+                            WHERE target_type = 2 
+                            AND member_id = #{ memberId }
+                        ) m,
+                       (  
+                          SELECT COUNT(*)JJIM, target_id 
+                          FROM jjim 
+                          WHERE target_type = 2 
+                          GROUP BY target_id
+                       ) x,
+                       (  
+                          SELECT COUNT(post_id) imgs, post_id
+                            FROM sns_media
+                        GROUP BY post_id 
+                       ) IMGS_CNT
+        WHERE c.post_id = m.target_id(+)
+          AND c.post_id = x.target_id(+)
+          AND c.post_id = IMGS_CNT.post_id
+          AND c.member_id = #{ memberId } 
+          AND c.sec_post = 1 
+     ORDER BY c.post_id
+   </select>
+   
+   
+   
+   <!-- 피드상세 이미지 -->
+   <select id="getFeedImg" resultType="com.yedam.mohobby.service.sns.SnsMediaVO">
+        SELECT post_id, file_name
+        FROM sns_media
+        WHERE post_id = #{ postId }
+        ORDER BY file_name
+   </select>
+   
+   
+   <!-- 취미 조회 -->
+<!--    <select id="getUserHobbies" parameterType="String" resultType="com.yedam.mohobby.service.user.MemberVO">
+      SELECT REGEXP_SUBSTR(hobbies, '[^,]+', 1, Level) hobbies
+        FROM member
+       WHERE hobbies is not null
+         AND member_id = #{ memberId }
+<![CDATA[CONNECT BY LEVEL <= REGEXP_COUNT(hobbies, '[^,]+')
+         AND PRIOR member_id  = member_id       
+         AND PRIOR DBMS_RANDOM.VALUE IS NOT NULL
+         AND ROWNUM <=5]]>
+   </select> -->
+   
+   
+   
+   <!--
+
+         게시글 등록 - 해시태그
+
+            게시글 테이블에 들어온 해시태그들을 특정 문자(',') 기준으로 잘라서 해시태그 테이블에 저장
+            1. 이미 테이블에 존재하는 해시태그면 update 사용횟수
+            2. 테이블에 존재하지 않는 해시태그면 insert
+            
+   -->
+   <update id="updateHashtag" parameterType="com.yedam.mohobby.service.sns.SnsPostVO">
+       MERGE INTO hashtag h
+            USING (SELECT                
+	       <![CDATA[REGEXP_SUBSTR(hashtag, '[^,]+', 1, Level) hashtag]]>
+	                FROM sns_post
+	                WHERE hashtag IS NOT NULL
+	                AND post_id = #{ postId }
+	       <![CDATA[CONNECT BY LEVEL <= REGEXP_COUNT(hashtag, '[^,]+')]]>       
+	                AND PRIOR post_id  = post_id       
+	                AND PRIOR DBMS_RANDOM.VALUE IS NOT NULL
+                  ) p
+	          ON  (h.hashtag = p.hashtag)
+	        WHEN  MATCHED THEN UPDATE SET h.use_count = h.use_count+1
+	        WHEN  NOT MATCHED THEN
+	              INSERT(h.hashtag)
+	              VALUES(p.hashtag)
+   </update>
+ 
+ 
+ 
+   <!-- 
+   
+         팔로우
+   
+   -->
+   <!-- 팔로우목록 -->
+   <!-- 팔로우 -->
+   <insert id="follow" parameterType="com.yedam.mohobby.service.sns.SnsFollowVO">
+     <selectKey keyProperty="followId" resultType="Integer" order="BEFORE">
+        SELECT NVL(MAX(follow_id), 0)+1 FROM follow
+     </selectKey>
+        INSERT INTO follow (
+                        follow_id,
+                        following_id,
+                        follower_id
+                        )
+                  VALUES
+                       (  
+                        #{ followId },
+                        #{ followingId },
+                        #{ followerId }
+                        )
+   </insert>
+   
+   
+   <!-- 언팔로우 -->
+   <delete id="unfollow" parameterType="com.yedam.mohobby.service.sns.SnsFollowVO">
+      DELETE FROM follow
+       WHERE follower_id = #{ followerId }
+         AND following_id = #{ followingId }
+   </delete>
+   
+   
+   <!-- 팔로잉목록조회 -->
+   <select id="getFollowingList" parameterType = "String" resultType="com.yedam.mohobby.service.sns.SnsFollowVO">
+        SELECT f.follower_id, f.following_id, m.profile_img, m.nickname, m.intro
+          FROM follow f, member m
+         WHERE f.following_id = m.member_id
+           AND f.follower_id = #{ userId }
+      ORDER BY f.following_id
+   </select>
+   
+   
+   <!-- 팔로워목록조회 -->
+   <select id="getFollowerList" parameterType = "String" resultType="com.yedam.mohobby.service.sns.SnsFollowVO">
+      SELECT f.following_id, f.follower_id, m.profile_img, m.nickname, m.intro 
+          FROM follow f, member m
+         WHERE f.follower_id = m.member_id
+           AND f.following_id = #{ userId }
+      ORDER BY f.follower_id
+   </select>
+   
+   
+   <!-- 팔로우 상태 조회 -->
+   <select id="followCheck" parameterType = "String" resultType="Integer">
+      SELECT count(follow_id) AS follow_status
+        FROM follow
+       WHERE follower_id = #{ myId }
+         AND following_id = #{ targetId }
+   </select>
+   
+   
+   <!-- 
+   
+         검색
+         
+   -->
+   <!-- 유저전체 -->
+   <select id="getUsers" resultType="com.yedam.mohobby.service.user.MemberVO">
+      SELECT member_id, profile_img, nickname
+        FROM member
+   </select>
+   
+   
+   
+   
+   <!-- 유저검색 -->
+   <select id="searchUser" parameterType="String" resultType="com.yedam.mohobby.service.user.MemberVO">
+      SELECT member_id, profile_img, nickname
+        FROM member
+       WHERE member_id LIKE LOWER('%' || #{ memberId } || '%')
+   </select>
+   
+   <!-- 해시태그검색 -->
+   <select id="searchHashtag" resultType="com.yedam.mohobby.service.sns.SnsPostVO">
+	<![CDATA[  SELECT * 
+	             FROM (  SELECT  post_id, member_id, thumbnail, cmts, likes         
+	          					,REGEXP_SUBSTR(hashtag, '[^,]+', 1, Level) hashtag
+			               FROM sns_post
+			              WHERE hashtag IS NOT NULL
+			                AND post_id = post_id   
+              
+     		   CONNECT BY LEVEL <= REGEXP_COUNT(hashtag, '[^,]+'
+     		   )   
+                AND PRIOR post_id  = post_id       
+                AND PRIOR DBMS_RANDOM.VALUE IS NOT NULL)]]>
+			<where>
+		      <if test='hashtag != null and hashtag != ""'>
+		         hashtag = #{ hashtag }
+		      </if>
+ 			</where>
+   </select>
+
+
+   <!-- 리스트 해시태그 6개 -->
+   <select id="selectHashtagForMain" resultType="com.yedam.mohobby.service.communal.HashtagVO">
+      SELECT * FROM hashtag
+       WHERE ROWNUM <![CDATA[ <= ]]> 6
+       ORDER BY use_count DESC
+   </select>
+
+
+   <!-- 
+   
+         좋아요
+   
+    -->
+
+   <!-- 좋아요 여부에 따라 좋아요 상태 변경 및 총 좋아요 개수 update -->
+   <update id="sumLikes" parameterType="com.yedam.mohobby.service.communal.JjimVO">
+        DECLARE
+            v_target_id NUMBER := #{ targetId };
+            v_member_id member.member_id%TYPE := #{ memberId };
+            v_status NUMBER;
+          BEGIN
+         SELECT
+       
+          (CASE WHEN NOT EXISTS (
+					              SELECT *
+					                FROM jjim
+					               WHERE target_id IN (
+										                  SELECT target_id FROM jjim
+										                  WHERE target_id = v_target_id
+										                  AND member_id = v_member_id
+										                  AND target_type = 2       
+									                  )
+					              )THEN 0 ELSE 1 END  
+          ) test
+          
+        INTO v_status
+        FROM dual;
+      
+          IF v_status = 0 THEN
+           INSERT INTO jjim (target_id, target_type, member_id) VALUES(v_target_id, 2, v_member_id);
+                UPDATE sns_post SET likes = likes + 1 WHERE post_id = v_target_id;
+           
+        ELSIF v_status = 1 THEN 
+           DELETE FROM jjim WHERE target_id= v_target_id AND target_type=2 AND member_id = v_member_id;
+                UPDATE sns_post SET likes = likes - 1 WHERE post_id = v_target_id;
+           
+      END IF;
+         END;
+   </update>
+   
+   
+   <!-- 좋아요한게시물 모아보기 -->
+<!--    <select id="">
+   	SELECT s.*, 
+   	  FROM
+   </select> -->
+
+
+
+   <!--
+   
+         댓글
+         
+    -->
+    <!-- 댓글입력 -->
+    <insert id="inserCmt" parameterType="com.yedam.mohobby.service.communal.CommentsVO">
+       <selectKey keyProperty="commId" resultType="Integer" order="BEFORE">
+           SELECT NVL(MAX(comm_id), 0)+1 FROM comments
+        </selectKey>
+           DECLARE
+               v_commId comments.comm_id%TYPE := #{ commId };
+               v_member_id comments.member_id%TYPE := #{ memberId };
+               v_target_id comments.target_id%TYPE := #{ targetId };
+               v_content comments.content%TYPE := #{ content };
+           BEGIN
+               INSERT INTO comments (
+                           comm_id,
+                           member_id,
+                           target_id,
+                           target_type,
+                           content,
+                           write_date
+                           )
+                    VALUES (
+                            v_commId
+                           ,v_member_id
+                           ,v_target_id
+                           ,2
+                           ,v_content
+                           ,CURRENT_DATE
+                           );
+               UPDATE sns_post SET cmts = cmts+1
+                WHERE post_id = v_target_id;
+            END;       
+    </insert>
+    
+    
+   <!-- 댓글수정 -->
+   <update id="updateCmt" parameterType="com.yedam.mohobby.service.communal.CommentsVO">
+      UPDATE comments SET content = #{ content },
+                     write_date = CURRENT_DATE
+       WHERE comm_id = #{ commId }
+   </update>
+   
+   
+   <!-- 댓글삭제 -->
+   <delete id="deleteCmt" parameterType="Integer">
+        DECLARE
+            v_commId comments.comm_id%TYPE := #{ commId };
+            v_target_id comments.target_id%TYPE := #{ targetId };
+          BEGIN
+            DELETE FROM comments
+             WHERE comm_id = v_commId;
+            
+            UPDATE sns_post SET cmts = cmts-1
+             WHERE post_id = v_target_id;
+           END;
+   </delete>
+   
+   
+   <!-- 댓글조회 -->
+   <select id="getCmtLists" resultType="com.yedam.mohobby.service.communal.CommentsVO">
+      SELECT m.profile_img,
+	         c.target_type,
+	         c.target_id,
+	         c.parent_comm_id,
+	         c.comm_id,
+	         c.member_id,
+	         c.content,
+	         c.write_date,
+	         c.parent_member_id
+        FROM member m, (  SELECT * FROM comments
+                         WHERE target_id = #{ targetId }
+                           AND target_type = 2
+                      ) c
+       WHERE m.member_id = c.member_id
+        START WITH parent_comm_id IS NULL
+      CONNECT BY PRIOR comm_id = parent_comm_id
+       ORDER SIBLINGS BY comm_id
+   </select>
+   
+   
+   
+   <!--
+   
+         대댓글
+         
+    -->
+   <!-- 대댓입력 -->
+   <insert id="insertReCmt" parameterType="com.yedam.mohobby.service.communal.CommentsVO">
+      <selectKey keyProperty="commId" resultType="Integer" order="BEFORE">
+            SELECT NVL(MAX(comm_id), 0)+1 FROM comments
+       </selectKey>
+          DECLARE
+               v_commId comments.comm_id%TYPE := #{ commId };
+               v_member_id comments.member_id%TYPE := #{ memberId };
+               v_parent_comm_id comments.parent_comm_id%TYPE :=#{ parentCommId };
+               v_target_id comments.target_id%TYPE := #{ targetId };
+               v_content comments.content%TYPE := #{ content };
+               v_parent_member_id comments.parent_member_id%TYPE := #{ parentMemberId };
+         BEGIN
+             INSERT INTO comments (
+                        comm_id,
+                        member_id,
+                        parent_comm_id,
+                        target_id,
+                        target_type,
+                        content,
+                        write_date,
+                        parent_member_id
+                        )
+                 VALUES(
+                         v_commId
+                        ,v_member_id
+                        ,v_parent_comm_id
+                        ,v_target_id
+                        ,2
+                        ,v_content
+                        ,CURRENT_DATE
+                        ,v_parent_member_id
+                     );
+             UPDATE sns_post SET cmts = cmts+1
+               WHERE post_id = v_target_id;
+         END;
+   </insert>
+
+   <!--
+   
+         북마크컬렉션
+         
+   -->
+   <!-- 컬렉션생성 -->
+   <insert id="createBookmarkCtg" parameterType="com.yedam.mohobby.service.sns.SnsBookmarkVO">
+      <selectKey keyProperty="catgId" resultType="Integer" order="BEFORE">
+           SELECT NVL(MAX(CATG_ID), 0)+1 FROM sns_bookmark_catg
+       </selectKey>
+         INSERT INTO sns_bookmark_catg (
+                               CATG_ID,
+                               MEMBER_ID,
+                               CATG_NAME
+                                 )
+                         VALUES (
+                                 #{ catgId },
+                                 #{ memberId },
+                                 #{ catgName }
+                                 )
+   </insert>
+   
+   
+   <!-- 컬렉션수정(이름) -->
+   <update id="updateBookmarkCtgName" parameterType="com.yedam.mohobby.service.sns.SnsBookmarkVO">
+      UPDATE sns_bookmark_catg SET CATG_NAME = #{ catgName }
+       WHERE CATG_ID = #{ catgId }
+   </update>
+   
+   
+   <!-- 컬렉션삭제 -->
+   <delete id="deleteBookmarkCtg" parameterType="Integer">
+      DELETE FROM sns_bookmark_catg
+       WHERE CATG_ID = #{ catgId }
+   </delete>
+   
+   
+   <!-- 컬렉션리스트 -->
+   <select id="getBookmarkCtgs" parameterType="String" resultType="com.yedam.mohobby.service.sns.SnsBookmarkVO">
+       SELECT *
+         FROM (SELECT c.catg_id, c.member_id, c.catg_name, b.post_id, b.thumbnail, b.bookmark_date,
+                 RANK() OVER (PARTITION BY c.catg_id ORDER BY bookmark_date DESC) AS RNK
+                 FROM sns_bookmark_catg c, sns_bookmark b
+                WHERE c.catg_id = b.catg_id(+)
+                  AND member_id = #{ memberId })
+        WHERE RNK = '1'
+        ORDER BY catg_id DESC
+   </select>
+
+
+
+   <!-- 
+   
+      북마크 
+      
+   -->
+   <!-- 북마크추가 -->
+   <insert id="addBookmark" parameterType="com.yedam.mohobby.service.sns.SnsBookmarkVO">
+      INSERT INTO sns_bookmark (
+	                            CATG_ID,
+	                           	POST_ID,
+	                           	THUMBNAIL
+	                            )
+                         VALUES (
+                               #{ catgId },
+                               #{ postId },
+                               #{ thumbnail }
+                              )
+   </insert>
+   
+   
+   <!-- 북마크 카테고리 이동 -->
+   <update id="changeCatg" parameterType="com.yedam.mohobby.service.sns.SnsBookmarkVO">
+       UPDATE sns_bookmark SET CATG_ID = #{ catgId }
+       WHERE POST_ID = #{ postId }
+   </update>
+   
+   
+   <!-- 북마크삭제 -->
+   <delete id="deleteBookmark" parameterType="com.yedam.mohobby.service.sns.SnsBookmarkVO">
+      DELETE FROM sns_bookmark
+            WHERE (catg_id, post_id)
+               IN (
+                   SELECT catg_id, post_id 
+                     FROM sns_bookmark
+                    WHERE catg_id 
+                       IN (
+                           SELECT catg_id 
+                             FROM sns_bookmark_catg 
+                            WHERE member_id = #{ memberId }
+                  		  )
+                      AND post_id=#{ postId }
+                  )
+   </delete>
+   
+   
+   <!-- 북마크여부조회 -->
+   <select id="isBookmark" parameterType="com.yedam.mohobby.service.sns.SnsBookmarkVO" resultType="Integer">
+       SELECT COUNT(catg_id) AS bookStatus
+         FROM sns_bookmark_catg
+        WHERE catg_id IN(
+                           SELECT catg_id
+                           FROM sns_bookmark
+                           WHERE post_id=#{ postId }
+                        )
+          AND member_id =#{ memberId }
+   </select>
+   
+   
+   <!-- 카테고리별 북마크조회 -->
+   <select id="getBookmarks" resultType="com.yedam.mohobby.service.sns.SnsBookmarkVO">
+      SELECT b.catg_id, b.post_id, b.thumbnail, s.member_id
+        FROM sns_bookmark b, sns_post s
+       WHERE b.post_id = s.post_id 
+         AND catg_id = #{ catgId }
+       ORDER BY post_id DESC
+   </select>
+   
+   
+   <!-- 전체북마크조회 -->
+   <select id="getAllBookmarks" parameterType="String" resultType="com.yedam.mohobby.service.sns.SnsBookmarkVO">
+      SELECT b.catg_id, b.post_id, b.thumbnail, c.member_id
+        FROM sns_bookmark b, sns_bookmark_catg c
+       WHERE b.catg_id = c.catg_id 
+         AND c.member_id = #{ memberId }
+    ORDER BY post_id DESC
+   </select>
+   
+
+   
+   
+   <!-- 
+   
+         페이징 
+   
+   -->
+   
+   <!-- 전체 피드조회 페이징 -->
+   <select id="allListPaging" parameterType="Integer" resultType="com.yedam.mohobby.service.sns.SnsPostVO">
+       <![CDATA[SELECT * FROM (SELECT ROWNUM AS RNUM, T.*
+		                         FROM (
+		                                SELECT * FROM(  sns_post s
+		                                                    JOIN (  SELECT count(post_id) imgs, post_id
+		                                                              FROM sns_media
+		                                                          GROUP BY post_id 
+		                                                          ) IMGS_CNT
+		                                   				      ON (s.post_id=IMGS_CNT.post_id))) T
+		                                        WHERE ROWNUM <= #{firstIdx}+20                                 
+		                              )
+               			WHERE #{firstIdx} <= RNUM]]>
+                      
+		                      
+   </select>
+   
+
+</mapper>
